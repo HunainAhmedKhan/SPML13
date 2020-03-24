@@ -99,7 +99,7 @@ class SingleVendorBill(models.TransientModel):
 							'state':'draft',
 							'partner_id': order.partner_id.id,
 							'invoice_line_ids': invoice_lines,
-							'journal_id': journal_id.id or False,
+# 							'journal_id': journal_id.id or False,
 							# 'invoice_payment_term_id': order.payment_term_id.id,
 							# 'fiscal_position_id': order.fiscal_position_id.id,
 							'company_id': order.company_id.id,
