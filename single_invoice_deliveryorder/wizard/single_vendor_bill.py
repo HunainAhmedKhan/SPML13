@@ -80,7 +80,7 @@ class SingleVendorBill(models.TransientModel):
 		invoice_lines = []
 		for order in purchase_orders:
 			for line in order.move_ids_without_package:
-				account_id = line.product_id.property_account_expense_id or line.product_id.categ_id.property_account_expense_categ_id
+				account_id = line.product_id.property_account_income_id or line.product_id.categ_id.property_account_income_categ_id
 				invoice_lines.append(((0,0,{
 							'name': line.name,
 							'display_name': line.picking_id.name,
@@ -99,7 +99,7 @@ class SingleVendorBill(models.TransientModel):
 							'state':'draft',
 							'partner_id': order.partner_id.id,
 							'invoice_line_ids': invoice_lines,
-							# 'journal_id': journal_id.id or False,
+							'journal_id': journal_id.id or False,
 							# 'invoice_payment_term_id': order.payment_term_id.id,
 							# 'fiscal_position_id': order.fiscal_position_id.id,
 							'company_id': order.company_id.id,
