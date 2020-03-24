@@ -75,7 +75,7 @@ class SingleVendorBill(models.TransientModel):
 		invoice_line = self.env['account.move.line']
 		purchase_orders = self.env['stock.picking'].browse(self._context.get('active_ids'))
 		name_orders = [order.name for order in purchase_orders]
-		journal_id = self.env['account.journal'].search([('type','=','assigned')])
+		journal_id = self.env['account.journal'].search([('type','=','sale')])
 		partner_ids = [order.partner_id for order in purchase_orders if order.partner_id.id]
 		invoice_lines = []
 		for order in purchase_orders:
@@ -95,13 +95,13 @@ class SingleVendorBill(models.TransientModel):
 							'name': ','.join(map(str, name_orders)),
 							'invoice_origin':','.join(map(str, name_orders)),
 							'invoice_date':datetime.datetime.now().date(),
-							'type': 'in_invoice',
+							'type': 'out_invoice',
 							'state':'draft',
 							'partner_id': order.partner_id.id,
 							'invoice_line_ids': invoice_lines,
-# 							'journal_id': journal_id.id or False,
-							# 'invoice_payment_term_id': order.payment_term_id.id,
-							# 'fiscal_position_id': order.fiscal_position_id.id,
+							'journal_id': journal_id.id,
+							'invoice_payment_term_id': order.payment_term_id.id,
+							'fiscal_position_id': order.fiscal_position_id.id,
 							'company_id': order.company_id.id,
 							'user_id': order.activity_user_id and order.activity_user_id.id,
 						}
