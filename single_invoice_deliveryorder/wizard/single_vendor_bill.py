@@ -100,7 +100,7 @@ class SingleVendorBill(models.TransientModel):
 							'partner_id': order.partner_id.id,
 							'invoice_line_ids': invoice_lines,
 							'journal_id': journal_id.id,
-							'invoice_payment_term_id': order.payment_term_id.id,
+# 							'invoice_payment_term_id': order.payment_term_id.id,
 							'fiscal_position_id': order.fiscal_position_id.id,
 							'company_id': order.company_id.id,
 							'user_id': order.activity_user_id and order.activity_user_id.id,
