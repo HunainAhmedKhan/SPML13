@@ -45,17 +45,17 @@ class SingleVendorBill(models.TransientModel):
 	# Create single Invoice from multiple orders
 
 	def create_single_vendor_bill(self):
-		purchase_orders = self.env['stock.picking'].browse(self._context.get('active_ids'))
-		name_orders = [order.name for order in purchase_orders]
-		partners = [order.partner_id.id for order in purchase_orders]
-		fiscal_positions = [order.fiscal_position_id.id for order in purchase_orders]
+		stock_orders = self.env['stock.picking'].browse(self._context.get('active_ids'))
+		name_orders = [order.name for order in stock_orders]
+		partners = [order.partner_id.id for order in stock_orders]
+		fiscal_positions = [order.fiscal_position_id.id for order in stock_orders]
 		not_confirmed_order = []
-		for order in purchase_orders:
+		for order in stock_orders:
 			if order.state != 'assigned':
 				not_confirmed_order.append(order.name)
 			else:
 				pass
-		if (len(purchase_orders)) < 2:
+		if (len(stock_orders)) < 2:
 			raise UserError(_('Please select atleast two Delivery Order to create Single Invoice'))
 		else:
 			if(len(set(partners))!=1):
@@ -64,7 +64,7 @@ class SingleVendorBill(models.TransientModel):
 				if (len(set(fiscal_positions))!=1):
 					raise UserError(_('Please select Delivery Order whose "Fiscal Poistions" are same to create Single Invoice.'))
 				else:
-					if any(order.state != 'assigned' for order in purchase_orders):
+					if any(order.state != 'assigned' for order in stock_orders):
 						raise UserError(_('Please select Delivery Order which are in "Ready State" state to create Single Invoice.%s is not confirmed yet.') % ','.join(map(str, not_confirmed_order)))
 					else:
 						vendor_bill_id = self.prepare_vendor_bill()
@@ -73,12 +73,12 @@ class SingleVendorBill(models.TransientModel):
 
 	def prepare_vendor_bill(self):
 		invoice_line = self.env['account.move.line']
-		purchase_orders = self.env['stock.picking'].browse(self._context.get('active_ids'))
-		name_orders = [order.name for order in purchase_orders]
-		journal_id = self.env['account.journal'].search([('type','=','sale')])
-		partner_ids = [order.partner_id for order in purchase_orders if order.partner_id.id]
+		stock_orders = self.env['stock.picking'].browse(self._context.get('active_ids'))
+		name_orders = [order.name for order in stock_orders]
+		journal_id = self.env['account.journal'].search([('type','=','sale')])[0]
+		partner_ids = [order.partner_id for order in stock_orders if order.partner_id.id]
 		invoice_lines = []
-		for order in purchase_orders:
+		for order in stock_orders:
 			for line in order.move_ids_without_package:
 				account_id = line.product_id.property_account_income_id or line.product_id.categ_id.property_account_income_categ_id
 				invoice_lines.append(((0,0,{
@@ -108,7 +108,7 @@ class SingleVendorBill(models.TransientModel):
 		vendor_bill_id = self.env['account.move'].create(vendor_bill_vals)
 		if vendor_bill_id:
 			precision = self.env['decimal.precision'].precision_get('Product Unit of Measure')
-			for order in purchase_orders:
+			for order in stock_orders:
 				if order.state not in ('assigned'):
 					order.invoice_status = 'no'
 					continue
