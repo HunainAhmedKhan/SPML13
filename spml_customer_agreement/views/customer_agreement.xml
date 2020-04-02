@@ -16,6 +16,7 @@
                             </h1>
                         </div>
                         <group>
+                            <field name="partner_id" string="Customer Name"/>
                             <field name="start_date" />
                             <field name="end_date" />
                         </group>
@@ -28,7 +29,8 @@
                                         <field name="description" />
                                         <field name="quantity" />
                                         <field name="uom_id" />
-                                        <field name="delivery_qty" />
+                                        <field name="unit_price" string="Sale Price"/>
+                                        <field name="delivery_qty" readonly="1"/>
                                         <field name="remain_qty" />
                                     </tree>
                                 </field>

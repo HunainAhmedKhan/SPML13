@@ -14,10 +14,11 @@ class SaleOrderLine(models.Model):
         p = []
         if self.customer_agreement_id:
             for i in self.customer_agreement_id.product_ids:
-                p.append(i.product_id.id)
+                if i.remain_qty > 0:
+                    p.append(i.product_id.id)
                 # print("44444444444",i.product_id.name)
                 # print({'domain': {'product_id':[('product_id','in',p)]}})
-            return {'domain': {'product_id':[('id', 'in', p)]}}
+        return {'domain': {'product_id':[('id', 'in', p)]}}
 
     @api.onchange('product_uom_qty')
     def _onchange_product_uom_qty(self):
@@ -39,6 +40,16 @@ class SaleOrder(models.Model):
     # departure_time = fields.Datetime()
     # arrival_time = fields.Datetime()
     # transportation_ids = fields.One2many('transportation.operation', 'sale_id', string='Transfers')
+
+    @api.onchange('partner_id')
+    def _onchange_customer_agreement_id(self):
+        p = []
+        for record in self:
+            agreement_ids = self.env['customer.tender.agreement'].search([('partner_id', '=', record.partner_id.id)])
+            if agreement_ids:
+                for i in agreement_ids:
+                    p.append(i.id)
+            return {'domain': {'customer_agreement_id': [('id', 'in', p)]}}
 
     # @api.onchange('customer_agreement_id')
     # def _onchange_customer_agreement_id(self):
