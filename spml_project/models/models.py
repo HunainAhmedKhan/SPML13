@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields, api,_
 
 class BankAccount(models.Model):
     _inherit = 'account.bank.statement.line'
@@ -6,10 +6,6 @@ class BankAccount(models.Model):
     bank_account = fields.Many2one('account.account', 'Account')
     employee_name = fields.Many2one('hr.employee', 'Employee')
 
-
-class BankAccount(models.Model):
-    _inherit = 'stock.picking'
-    
 
 class Manufactoring(models.Model):
     _inherit = 'mrp.production'
@@ -151,5 +147,70 @@ class ProductTemplateCostStructure(models.AbstractModel):
         productions = self.env['mrp.production'].search([('product_id', 'in', docids), ('state', '=', 'done')])
         res = self.env['report.mrp_account_enterprise.mrp_cost_structure'].get_lines(productions)
         return {'lines': res}
+
+class MRPMaterial(models.Model):
+
+    _inherit = 'mrp.production'
+    _description = 'MRP Raw Material'
+
+    state = fields.Selection(selection_add=[('raw', 'Request Raw Material'),('qc', 'QC Sample')])
+
+    def action_request(self):
+        dropship_vals = []
+        print("HEllo")
+        self.write({'state': 'raw'})
+        for company in self:
+            sequence = self.env['ir.sequence'].search([
+                ('code', '=', 'stock.dropshipping')])
+            dropship_picking_type = self.env['stock.picking.type'].search([
+                ('name', '=', 'Request Raw Material')],limit=1)
+            product_car = self.env['product.product'].search([
+                ('id', '=', company.product_id.id)], limit=1)
+            print(dropship_picking_type.name)
+            dropship_vals.append({
+                'name': 'Request Raw Material',
+                'warehouse_id':self.env.user.company_id.id,
+                'sequence_id': sequence.id,
+                'code': 'internal',
+                'default_location_src_id': self.env.ref('stock.stock_location_suppliers').id,
+                'default_location_dest_id': self.env.ref('stock.stock_location_customers').id,
+                'sequence_code': 'RRM',
+
+            })
+            if dropship_vals:
+
+                self.env['stock.picking.type'].create(dropship_vals)
+                # outgoing_shipment = self.env['stock.picking'].create({
+                #     'picking_type_id': dropship_picking_type.id,
+                #     'location_id': self.env.ref('stock.stock_location_stock').id,
+                #     'location_dest_id': self.env.ref('stock.stock_location_customers').id,
+                #     'state':'confirmed',
+                #     'move_lines': [(0, 0, {
+                #         'name': 'Request Raw Material',
+                #         'product_id': company.product_id.id,
+                #         'product_uom_qty': company.product_qty,
+                #         'product_uom': product_car.uom_id.id,
+                #         'location_id': self.env.ref('stock.stock_location_stock').id,
+                #         'location_dest_id': self.env.ref('stock.stock_location_customers').id})]
+                # })
+                # outgoing_shipment.action_confirm()
+
+    def button_qc_sample(self):
+        self.ensure_one()
+        self.write({'state': 'qc'})
+        print("QC Sample")
+        return {
+            'name': _('QC Sample'),
+            'view_mode': 'form',
+            'res_model': 'stock.scrap',
+            'view_id': self.env.ref('stock.stock_scrap_form_view2').id,
+            'type': 'ir.actions.act_window',
+            'context': {'default_production_id': self.id,
+                        'product_ids': (self.move_raw_ids.filtered(lambda x: x.state not in ('done', 'cancel')) | self.move_finished_ids.filtered(lambda x: x.state == 'done')).mapped('product_id').ids,
+                        'default_company_id': self.company_id.id
+                        },
+            'target': 'new',
+        }
+
 
 
